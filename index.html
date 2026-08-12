@@ -1,0 +1,723 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+.ledger-app {
+  --paper: #f7f4e9;
+  --paper-line: #cfe0d1;
+  --ink: #1b3a4b;
+  --ink-soft: #3f5a68;
+  --income: #2f6f4e;
+  --expense: #a63d2f;
+  --brass: #b6893f;
+  --paper-shadow: rgba(27, 58, 75, 0.12);
+
+  font-family: 'Inter', sans-serif;
+  background: var(--paper);
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 30px,
+      var(--paper-line) 30px,
+      var(--paper-line) 31px
+    );
+  color: var(--ink);
+  padding: 28px 20px 60px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.ledger-app * { box-sizing: border-box; }
+
+.ledger-app .binding {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 46px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--ink) 0px, var(--ink) 3px,
+    transparent 3px, transparent 34px
+  );
+  opacity: 0.15;
+}
+
+.ledger-wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding-left: 30px;
+}
+
+.ledger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 3px double var(--ink);
+  padding-bottom: 14px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ledger-title {
+  font-family: 'Spectral', serif;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin: 0;
+}
+.ledger-title .sub {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.month-nav button {
+  background: none;
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  width: 30px; height: 30px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  transition: background 0.15s, color 0.15s;
+}
+.month-nav button:hover { background: var(--ink); color: var(--paper); }
+.month-label { font-size: 15px; font-weight: 600; min-width: 130px; text-align: center; }
+
+.balance-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  padding: 16px 22px;
+  margin-bottom: 20px;
+  box-shadow: 3px 3px 0 var(--paper-shadow);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.balance-main .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.balance-main .amount {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.balance-main .amount.neg { color: var(--expense); }
+.balance-main .amount.pos { color: var(--income); }
+
+.mini-stats { display: flex; gap: 22px; }
+.mini-stat { text-align: right; }
+.mini-stat .label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--ink-soft); font-weight: 600;
+}
+.mini-stat .val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 17px; font-weight: 600;
+}
+.mini-stat.in .val { color: var(--income); }
+.mini-stat.out .val { color: var(--expense); }
+
+.panel {
+  background: rgba(255,255,255,0.45);
+  border: 1px solid var(--paper-line);
+  border-radius: 3px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.panel h2 {
+  font-family: 'Spectral', serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 14px;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel h2::before {
+  content: '';
+  width: 8px; height: 8px;
+  background: var(--brass);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.entry-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+.entry-form .full { grid-column: 1 / -1; }
+.entry-form label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  display: block;
+  margin-bottom: 4px;
+}
+.entry-form input, .entry-form select {
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.entry-form input:focus, .entry-form select:focus {
+  outline: 2px solid var(--brass);
+  outline-offset: 1px;
+}
+
+.type-toggle {
+  display: flex;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.type-toggle button {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-right: 1px solid var(--ink);
+}
+.type-toggle button:last-child { border-right: none; }
+.type-toggle button.active.income { background: var(--income); color: #fff; }
+.type-toggle button.active.expense { background: var(--expense); color: #fff; }
+
+.submit-row { display: flex; justify-content: flex-end; margin-top: 4px; }
+.submit-btn {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 9px 20px;
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+.submit-btn:hover { background: var(--ink-soft); }
+
+.cat-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 90px 30px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--paper-line);
+  position: relative;
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-name { font-size: 13px; font-weight: 600; }
+.cat-bar-track {
+  height: 8px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.cat-bar-fill { height: 100%; background: var(--income); transition: width 0.3s; }
+.cat-bar-fill.over { background: var(--expense); }
+.cat-budget-input {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--paper-line);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: right;
+}
+.stamp {
+  position: absolute;
+  right: 34px;
+  top: -4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--expense);
+  border: 1.5px solid var(--expense);
+  padding: 1px 5px;
+  border-radius: 2px;
+  transform: rotate(-6deg);
+  opacity: 0.85;
+  pointer-events: none;
+}
+.cat-del {
+  background: none; border: none; color: var(--ink-soft);
+  cursor: pointer; font-size: 14px; text-align: center;
+}
+.cat-del:hover { color: var(--expense); }
+
+.add-cat-row { display: flex; gap: 8px; margin-top: 10px; }
+.add-cat-row input {
+  flex: 1;
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1px solid var(--paper-line);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.add-cat-row button {
+  background: none;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  border-radius: 2px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+table.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+}
+table.ledger-table thead th {
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  padding: 0 8px 8px;
+  border-bottom: 1.5px solid var(--ink);
+}
+table.ledger-table td {
+  padding: 7px 8px;
+  border-bottom: 1px dashed var(--paper-line);
+  vertical-align: top;
+}
+table.ledger-table tbody tr:nth-child(odd) { background: rgba(207, 224, 209, 0.25); }
+.col-amt { text-align: right; white-space: nowrap; }
+.col-amt.income { color: var(--income); }
+.col-amt.expense { color: var(--expense); }
+.col-bal { text-align: right; font-weight: 600; white-space: nowrap; }
+.row-del {
+  background: none; border: none; color: var(--ink-soft);
+  cursor: pointer; font-size: 13px;
+}
+.row-del:hover { color: var(--expense); }
+.empty-row td {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--ink-soft);
+  font-family: 'Inter', sans-serif;
+  font-style: italic;
+}
+
+.loading-note {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--ink-soft);
+  font-family: 'Spectral', serif;
+  font-style: italic;
+}
+
+@media (max-width: 520px) {
+  .entry-form { grid-template-columns: 1fr; }
+  .cat-row { grid-template-columns: 80px 1fr 70px 24px; }
+  .binding { display: none; }
+  .ledger-wrap { padding-left: 0; }
+}
+</style>
+
+<div class="ledger-app">
+  <div class="binding"></div>
+  <div class="ledger-wrap">
+    <div class="ledger-header">
+      <h1 class="ledger-title">The Ledger
+        <span class="sub">personal earnings &amp; spending register</span>
+      </h1>
+      <div class="month-nav">
+        <button id="prev-month" aria-label="Previous month">‹</button>
+        <span class="month-label" id="month-label">—</span>
+        <button id="next-month" aria-label="Next month">›</button>
+      </div>
+    </div>
+
+    <div class="balance-strip">
+      <div class="balance-main">
+        <div class="label">Balance to date</div>
+        <div class="amount" id="balance-display">$0.00</div>
+      </div>
+      <div class="mini-stats">
+        <div class="mini-stat in">
+          <div class="label">In (month)</div>
+          <div class="val" id="stat-income">$0.00</div>
+        </div>
+        <div class="mini-stat out">
+          <div class="label">Out (month)</div>
+          <div class="val" id="stat-expense">$0.00</div>
+        </div>
+        <div class="mini-stat">
+          <div class="label">Net (month)</div>
+          <div class="val" id="stat-net">$0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>New entry</h2>
+      <div class="entry-form">
+        <div class="full">
+          <label>Type</label>
+          <div class="type-toggle">
+            <button type="button" id="btn-income" class="active income">Income</button>
+            <button type="button" id="btn-expense" class="expense">Expense</button>
+          </div>
+        </div>
+        <div>
+          <label>Date</label>
+          <input type="date" id="in-date">
+        </div>
+        <div>
+          <label>Amount</label>
+          <input type="number" id="in-amount" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="full">
+          <label>Description</label>
+          <input type="text" id="in-desc" placeholder="e.g. Paycheck, groceries, rent…">
+        </div>
+        <div class="full" id="category-field">
+          <label>Category</label>
+          <select id="in-category"></select>
+        </div>
+        <div class="full submit-row">
+          <button class="submit-btn" id="add-entry-btn">Add to ledger</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Monthly budgets</h2>
+      <div id="category-budgets"></div>
+      <div class="add-cat-row">
+        <input type="text" id="new-cat-name" placeholder="Add a category (e.g. Subscriptions)">
+        <button id="add-cat-btn">Add</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 id="ledger-table-title">This month's entries</h2>
+      <div id="ledger-table-container">
+        <div class="loading-note">Loading your ledger…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const DEFAULT_CATEGORIES = ["Food", "Housing", "Transport", "Utilities", "Entertainment", "Health", "Other"];
+  const STORAGE_KEY = "ledger-app-data";
+
+  let data = {
+    transactions: [], // {id, date:'YYYY-MM-DD', desc, category, amount, type:'income'|'expense'}
+    budgets: {},       // {category: limit}
+    categories: DEFAULT_CATEGORIES.slice()
+  };
+
+  let currentMonth = new Date();
+  currentMonth.setDate(1);
+  let currentType = 'income';
+
+  const $ = (id) => document.getElementById(id);
+
+  function fmt(n) {
+    const sign = n < 0 ? '-' : '';
+    return sign + '$' + Math.abs(n).toFixed(2);
+  }
+
+  function monthKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  function monthLabel(d) {
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  async function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        data.transactions = parsed.transactions || [];
+        data.budgets = parsed.budgets || {};
+        data.categories = (parsed.categories && parsed.categories.length) ? parsed.categories : DEFAULT_CATEGORIES.slice();
+      }
+    } catch (e) {
+      // no existing data yet, keep defaults
+    }
+  }
+
+  async function saveData() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.error('Could not save ledger data', e);
+    }
+  }
+
+  function populateCategorySelect() {
+    const sel = $('in-category');
+    sel.innerHTML = '';
+    data.categories.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      sel.appendChild(opt);
+    });
+  }
+
+  function setType(type) {
+    currentType = type;
+    $('btn-income').classList.toggle('active', type === 'income');
+    $('btn-expense').classList.toggle('active', type === 'expense');
+    $('category-field').style.display = type === 'expense' ? 'block' : 'none';
+  }
+
+  function transactionsForMonth(d) {
+    const mk = monthKey(d);
+    return data.transactions.filter(t => t.date.slice(0, 7) === mk);
+  }
+
+  function balanceBeforeMonth(d) {
+    const mk = monthKey(d);
+    return data.transactions
+      .filter(t => t.date.slice(0, 7) < mk)
+      .reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+  }
+
+  function allTimeBalance() {
+    return data.transactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+  }
+
+  function render() {
+    $('month-label').textContent = monthLabel(currentMonth);
+    $('ledger-table-title').textContent = monthLabel(currentMonth) + "'s entries";
+
+    const bal = allTimeBalance();
+    const balEl = $('balance-display');
+    balEl.textContent = fmt(bal);
+    balEl.className = 'amount ' + (bal < 0 ? 'neg' : 'pos');
+
+    const monthTx = transactionsForMonth(currentMonth).slice().sort((a, b) => a.date.localeCompare(b.date));
+    const income = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    $('stat-income').textContent = fmt(income);
+    $('stat-expense').textContent = fmt(expense);
+    $('stat-net').textContent = fmt(income - expense);
+
+    renderCategoryBudgets(monthTx);
+    renderLedgerTable(monthTx);
+  }
+
+  function renderCategoryBudgets(monthTx) {
+    const container = $('category-budgets');
+    container.innerHTML = '';
+    const spentByCat = {};
+    monthTx.filter(t => t.type === 'expense').forEach(t => {
+      spentByCat[t.category] = (spentByCat[t.category] || 0) + t.amount;
+    });
+
+    data.categories.forEach(cat => {
+      const spent = spentByCat[cat] || 0;
+      const budget = data.budgets[cat] || 0;
+      const pct = budget > 0 ? Math.min(100, (spent / budget) * 100) : (spent > 0 ? 100 : 0);
+      const over = budget > 0 && spent > budget;
+
+      const row = document.createElement('div');
+      row.className = 'cat-row';
+      row.innerHTML = `
+        <div class="cat-name">${cat}</div>
+        <div class="cat-bar-track"><div class="cat-bar-fill ${over ? 'over' : ''}" style="width:${pct}%"></div></div>
+        <input type="number" class="cat-budget-input" placeholder="budget" min="0" step="1" value="${budget || ''}" data-cat="${cat}">
+        <button class="cat-del" data-cat="${cat}" title="Remove category">✕</button>
+        ${over ? '<div class="stamp">OVER BUDGET</div>' : ''}
+      `;
+      container.appendChild(row);
+    });
+
+    container.querySelectorAll('.cat-budget-input').forEach(inp => {
+      inp.addEventListener('change', async (e) => {
+        const cat = e.target.dataset.cat;
+        const val = parseFloat(e.target.value) || 0;
+        data.budgets[cat] = val;
+        await saveData();
+        render();
+      });
+    });
+    container.querySelectorAll('.cat-del').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const cat = e.target.dataset.cat;
+        data.categories = data.categories.filter(c => c !== cat);
+        delete data.budgets[cat];
+        await saveData();
+        populateCategorySelect();
+        render();
+      });
+    });
+  }
+
+  function renderLedgerTable(monthTx) {
+    const container = $('ledger-table-container');
+    if (monthTx.length === 0) {
+      container.innerHTML = `
+        <table class="ledger-table">
+          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Debit</th><th>Credit</th><th>Balance</th><th></th></tr></thead>
+          <tbody><tr class="empty-row"><td colspan="7">No entries this month yet. Add one above.</td></tr></tbody>
+        </table>`;
+      return;
+    }
+
+    let running = balanceBeforeMonth(currentMonth);
+    const rows = monthTx.map(t => {
+      running += (t.type === 'income' ? t.amount : -t.amount);
+      return `
+        <tr>
+          <td>${t.date}</td>
+          <td>${escapeHtml(t.desc || '—')}</td>
+          <td>${t.type === 'expense' ? escapeHtml(t.category || '—') : '—'}</td>
+          <td class="col-amt expense">${t.type === 'expense' ? fmt(t.amount) : ''}</td>
+          <td class="col-amt income">${t.type === 'income' ? fmt(t.amount) : ''}</td>
+          <td class="col-bal">${fmt(running)}</td>
+          <td><button class="row-del" data-id="${t.id}" title="Delete entry">✕</button></td>
+        </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+      <table class="ledger-table">
+        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Debit</th><th>Credit</th><th>Balance</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    container.querySelectorAll('.row-del').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.target.dataset.id;
+        data.transactions = data.transactions.filter(t => t.id !== id);
+        await saveData();
+        render();
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function addEntry() {
+    const date = $('in-date').value;
+    const amount = parseFloat($('in-amount').value);
+    const desc = $('in-desc').value.trim();
+    const category = $('in-category').value;
+
+    if (!date || !amount || amount <= 0) {
+      $('in-amount').focus();
+      return;
+    }
+
+    const entry = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      date,
+      desc,
+      category: currentType === 'expense' ? category : '',
+      amount,
+      type: currentType
+    };
+    data.transactions.push(entry);
+    await saveData();
+
+    $('in-amount').value = '';
+    $('in-desc').value = '';
+
+    const entryMonth = new Date(date + 'T00:00:00');
+    entryMonth.setDate(1);
+    currentMonth = entryMonth;
+
+    render();
+  }
+
+  async function addCategory() {
+    const input = $('new-cat-name');
+    const name = input.value.trim();
+    if (!name || data.categories.includes(name)) return;
+    data.categories.push(name);
+    await saveData();
+    input.value = '';
+    populateCategorySelect();
+    render();
+  }
+
+  function initEvents() {
+    $('btn-income').addEventListener('click', () => setType('income'));
+    $('btn-expense').addEventListener('click', () => setType('expense'));
+    $('add-entry-btn').addEventListener('click', addEntry);
+    $('add-cat-btn').addEventListener('click', addCategory);
+    $('new-cat-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') addCategory(); });
+    $('prev-month').addEventListener('click', () => {
+      currentMonth.setMonth(currentMonth.getMonth() - 1);
+      currentMonth = new Date(currentMonth);
+      render();
+    });
+    $('next-month').addEventListener('click', () => {
+      currentMonth.setMonth(currentMonth.getMonth() + 1);
+      currentMonth = new Date(currentMonth);
+      render();
+    });
+    $('in-date').value = new Date().toISOString().slice(0, 10);
+  }
+
+  async function init() {
+    initEvents();
+    populateCategorySelect();
+    setType('income');
+    await loadData();
+    populateCategorySelect();
+    render();
+  }
+
+  init();
+})();
+</script>
